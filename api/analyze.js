@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -14,39 +13,37 @@ Waking Mood: ${mood}
 Cultural Context: ${culturalContexts.join(', ')}
 Is Nightmare: ${isNightmare ? 'Yes' : 'No'}
 
-Respond ONLY with valid JSON (no markdown, no backticks):
+Respond ONLY with valid JSON:
 {
   "theme": "Core lesson in 1-2 sentences",
   "symbols": [{"symbol": "symbol name", "meaning": "growth-focused interpretation"}],
   "reflectionPrompt": "Thought-provoking question",
   "affirmation": "Empowering affirmation statement",
   "culturalNote": "Brief note honoring selected traditions",
-  "nightmareReframe": ${isNightmare ? '"Alternative empowering perspective"' : 'null'}
+  "nightmareReframe": ${isNightmare ? '"Alternative empowering perspective"' : null}
 }`;
 
-    // Call Anthropic API
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
-        messages: [{ role: 'user', content: prompt }]
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7
       })
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status}`);
+      const err = await response.text();
+      throw new Error(err);
     }
 
     const data = await response.json();
-    const textContent = data.content.find(c => c.type === 'text')?.text || '';
-    const cleanJson = textContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const parsed = JSON.parse(cleanJson);
+    const text = data.choices[0].message.content.trim();
+    const parsed = JSON.parse(text);
 
     return res.status(200).json(parsed);
   } catch (error) {
