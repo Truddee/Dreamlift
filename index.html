@@ -92,30 +92,25 @@ Respond ONLY with valid JSON (no markdown, no backticks):
   "culturalNote": "Brief note honoring selected traditions",
   "nightmareReframe": ${isNightmare ? '"Alternative empowering perspective"' : 'null'}
 }`;
-const API_KEY = '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';
-                       const response = await fetch('https://api.anthropic.com/v1/messages', {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'x-api-key': API_KEY,
-                            'anthropic-version': '2023-06-01'
-                        },
-                        body: JSON.stringify({
-                            model: 'claude-sonnet-4-20250514',
-                            max_tokens: 1500,
-                            messages: [{ role: 'user', content: prompt }]
-                        })
-                    });
+const response = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        dreamText,
+        mood,
+        culturalContexts,
+        isNightmare
+    })
+});
 
-                    if (!response.ok) {
-                        throw new Error(`API Error: ${response.status}`);
-                    }
+if (!response.ok) {
+    throw new Error(`API Error: ${response.status}`);
+}
 
-                    const data = await response.json();
-                    const textContent = data.content.find(c => c.type === 'text')?.text || '';
-                    const cleanJson = textContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-                    const parsed = JSON.parse(cleanJson);
-                    
+const parsed = await response.json();
+                                           
                     setAnalysis(parsed);
                     setAnalysesUsed(prev => prev + 1);
                     setScreen('analysis');
@@ -406,4 +401,5 @@ const API_KEY = 'sk-ant-api03-GyLIaWiNnbuw9xDcSz9Z4gmkf1SeRLEgUcJZTUAg6q8Vw-P7X7
 </body>
 
 </html>
+
 
