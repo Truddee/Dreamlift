@@ -4,7 +4,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { dreamText, mood, culturalContexts, isNightmare } = req.body;
+    let body = req.body;
+    if (typeof body === 'string') {
+      body = JSON.parse(body);
+    }
+
+    const { dreamText, mood, culturalContexts = [], isNightmare } = body;
+
+    if (!dreamText) {
+      return res.status(400).json({ error: 'Dream text is required' });
+    }
 
     const prompt = `You are DreamLift, a culturally-sensitive dream interpreter focused on empowerment and growth.
 
